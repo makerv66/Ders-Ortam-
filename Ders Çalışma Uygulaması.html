@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanal Kütüphanem - Çalışma Odaklayıcı</title>
+    <style>
+        /* --- GENEL TASARIM --- */
+        :root {
+            --primary-color: #5d4037; /* Koyu Ahşap */
+            --accent-color: #d7ccc8; /* Eski Kağıt */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Georgia', serif; /* Kütüphane hissi için serif font */
+            background: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #3e2723;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+            padding: 20px;
+            backdrop-filter: blur(8px); /* Arka planı bulanıklaştırma */
+        }
+
+        /* --- KUTULAR (KARTLAR) --- */
+        .card {
+            background: var(--glass-bg);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        /* --- KRONOMETRE BÖLÜMÜ --- */
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            font-family: 'Courier New', monospace; /* Dijital saat hissi */
+            color: #2c1a16;
+            margin: 20px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            font-family: 'Georgia', serif;
+        }
+
+        .btn-start { background-color: #4caf50; color: white; }
+        .btn-stop { background-color: #f44336; color: white; }
+        .btn-reset { background-color: #ff9800; color: white; }
+        button:hover { opacity: 0.9; }
+
+        /* --- ORTAM SESLERİ --- */
+        .sound-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .sound-icon { font-size: 1.5rem; margin-right: 10px; }
+        
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        /* --- YAPILACAKLAR LİSTESİ --- */
+        .todo-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #todo-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        ul { list-style: none; padding: 0; }
+        
+        li {
+            background: rgba(255,255,255,0.6);
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        li.completed span {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #d32f2f;
+            font-size: 1.2rem;
+            padding: 0 5px;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-column">
+        <div class="card">
+            <h2>⏱️ Çalışma Süresi</h2>
+            <div class="timer-display" id="display">00:00:00</div>
+            <div class="controls">
+                <button class="btn-start" onclick="startTimer()">Başlat</button>
+                <button class="btn-stop" onclick="stopTimer()">Durdur</button>
+                <button class="btn-reset" onclick="resetTimer()">Sıfırla</button>
+            </div>
+            <p style="text-align: center; margin-top: 15px; font-style: italic;">"Başarı, her gün tekrarlanan küçük çabaların toplamıdır."</p>
+        </div>
+
+        <br>
+
+        <div class="card">
+            <h2>📝 Hedeflerim</h2>
+            <div class="todo-input-group">
+                <input type="text" id="todo-input" placeholder="Bugün ne çalışacaksın?">
+                <button style="background-color: var(--primary-color); color: white;" onclick="addTodo()">Ekle</button>
+            </div>
+            <ul id="todo-list">
+                </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎧 Kütüphane Ambiyansı</h2>
+        <p class="footer-note">Ses seviyesini kaydırarak atmosferi oluşturun.</p>
+        
+        <div class="sound-control">
+            <span class="sound-icon">🌧️</span>
+            <span>Yağmur</span>
+            <input type="range" min="0" max="100" value="0" oninput="adjustVolume('rain', this.value)">
+            <audio id="audio-rain" loop>
+                <source src="https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg" type="audio/ogg">
+            </audio>
+        </div>
+
+        <div class="sound-control">
+            <span class="sound-icon">🔥</span>
+            <span>Şömine</span>
+            <input type="range" min="0" max="100" value="0" oninput="adjustVolume('fire', this.value)">
+            <audio id="audio-fire" loop>
+                <source src="https://actions.google.com/sounds/v1/ambiences/fire.ogg" type="audio/ogg">
+            </audio>
+        </div>
+
+        <div class="sound-control">
+            <span class="sound-icon">☕</span>
+            <span>Kafe Uğultusu</span>
+            <input type="range" min="0" max="100" value="0" oninput="adjustVolume('cafe', this.value)">
+            <audio id="audio-cafe" loop>
+                <source src="https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg" type="audio/ogg">
+            </audio>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px;">
+            <h3>Nasıl Kullanılır?</h3>
+            <ul style="padding-left: 20px; font-size: 0.9rem;">
+                <li>Hedeflerini listeye ekle.</li>
+                <li>İstediğin sesleri kaydırıcılarla aç (Karıştırabilirsin).</li>
+                <li>Kronometreyi başlat ve odaklan!</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- KRONOMETRE MANTIĞI ---
+    let startTime;
+    let updatedTime;
+    let difference;
+    let tInterval;
+    let running = false;
+    let savedTime = 0;
+
+    const display = document.getElementById('display');
+
+    function startTimer() {
+        if(!running){
+            startTime = new Date().getTime();
+            tInterval = setInterval(getShowTime, 1000);
+            running = true;
+        }
+    }
+
+    function stopTimer() {
+        if(running){
+            clearInterval(tInterval);
+            savedTime += difference;
+            running = false;
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(tInterval);
+        savedTime = 0;
+        difference = 0;
+        running = false;
+        display.innerHTML = "00:00:00";
+    }
+
+    function getShowTime() {
+        updatedTime = new Date().getTime();
+        difference = updatedTime - startTime; 
+        
+        // Geçmişte durdurulmuşsa o süreyi de ekle
+        let totalDifference = difference + savedTime;
+
+        let hours = Math.floor((totalDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((totalDifference % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((totalDifference % (1000 * 60)) / 1000);
+
+        hours = (hours < 10) ? "0" + hours : hours;
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        display.innerHTML = hours + ':' + minutes + ':' + seconds;
+        
+        // Başlıkta da süreyi göster (sekme değiştirdiğinde görmek için)
+        document.title = `${hours}:${minutes}:${seconds} - Çalışıyor`;
+    }
+
+    // --- SES KONTROL MANTIĞI ---
+    function adjustVolume(soundId, volume) {
+        const audio = document.getElementById(`audio-${soundId}`);
+        const vol = volume / 100;
+        
+        if (vol > 0 && audio.paused) {
+            audio.play();
+        } else if (vol === 0) {
+            audio.pause();
+        }
+        
+        audio.volume = vol;
+    }
+
+    // --- YAPILACAKLAR LİSTESİ MANTIĞI ---
+    const todoInput = document.getElementById('todo-input');
+    const todoList = document.getElementById('todo-list');
+
+    // Enter tuşuna basınca ekleme
+    todoInput.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            addTodo();
+        }
+    });
+
+    function addTodo() {
+        const text = todoInput.value;
+        if(text === '') return;
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span onclick="toggleComplete(this)">${text}</span>
+            <button class="delete-btn" onclick="deleteTodo(this)">×</button>
+        `;
+        
+        todoList.appendChild(li);
+        todoInput.value = '';
+    }
+
+    function deleteTodo(btn) {
+        const li = btn.parentElement;
+        li.remove();
+    }
+
+    function toggleComplete(span) {
+        const li = span.parentElement;
+        li.classList.toggle('completed');
+    }
+</script>
+
+</body>
+</html>
